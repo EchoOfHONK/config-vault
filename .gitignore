@@ -1,0 +1,15 @@
+.env
+.secrets/
+data/
+imports/
+frontend/node_modules/
+frontend/dist/
+backend/.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+*.tsbuildinfo
+.DS_Store
+*.cvbackup
+test-results/
+work/

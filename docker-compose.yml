@@ -1,0 +1,77 @@
+name: config-vault
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: config_vault
+      POSTGRES_USER: vault
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+      TZ: ${TZ:-UTC}
+    secrets:
+      - db_password
+    volumes:
+      - ${DATA_DIRECTORY:-./data}/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vault -d config_vault"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    logging:
+      options: { max-size: "10m", max-file: "3" }
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db: { condition: service_healthy }
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: config_vault
+      DB_USER: vault
+      DB_PASSWORD_FILE: /run/secrets/db_password
+      VAULT_KEY_FILE: /run/secrets/vault_key
+      BOOTSTRAP_CONFIG_FILE: /run/secrets/bootstrap
+      DATA_DIR: /data
+      TMPDIR: /data/tmp
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      VAULT_LOCAL_ROOTS: /imports
+      TZ: ${TZ:-UTC}
+    secrets:
+      - db_password
+      - vault_key
+      - bootstrap
+    volumes:
+      - ${DATA_DIRECTORY:-./data}/vault:/data
+      - ${LOCAL_IMPORT_DIRECTORY:-./imports}:/imports:ro
+    read_only: true
+    tmpfs:
+      - /tmp:size=128m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    cap_add: [CHOWN, SETUID, SETGID, FOWNER, DAC_OVERRIDE]
+    logging:
+      options: { max-size: "10m", max-file: "3" }
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      backend: { condition: service_healthy }
+    ports:
+      - "${BIND_ADDRESS:-127.0.0.1}:${HTTP_PORT:-8080}:8080"
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      options: { max-size: "10m", max-file: "3" }
+secrets:
+  db_password:
+    file: ${SECRETS_DIRECTORY:-./.secrets}/db_password
+  vault_key:
+    file: ${SECRETS_DIRECTORY:-./.secrets}/vault_key
+  bootstrap:
+    file: ${SECRETS_DIRECTORY:-./.secrets}/bootstrap.json

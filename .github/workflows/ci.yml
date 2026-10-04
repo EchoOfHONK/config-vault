@@ -1,0 +1,63 @@
+name: Проверка Config Vault
+on:
+  push:
+  pull_request:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: vault
+          POSTGRES_PASSWORD: ci-only-isolated-password
+          POSTGRES_DB: config_vault_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U vault -d config_vault_test"
+          --health-interval 5s --health-timeout 5s --health-retries 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - uses: pnpm/action-setup@v4
+        with: { package_json_file: frontend/package.json }
+      - uses: actions/setup-node@v4
+        with: { node-version: "22", cache: pnpm, cache-dependency-path: frontend/pnpm-lock.yaml }
+      - name: Установить зависимости
+        run: |
+          pip install -r backend/requirements.txt
+          pnpm --dir frontend install --frozen-lockfile
+      - name: Проверить frontend и shell
+        run: |
+          pnpm --dir frontend build
+          shellcheck install.sh update.sh backup.sh restore.sh scripts/common.sh scripts/ssh-fixture.sh deploy/test-ssh/entrypoint.sh
+      - name: Запустить настоящий Debian SSH target
+        run: scripts/ssh-fixture.sh "$GITHUB_WORKSPACE/work/ssh-fixture" 22298
+      - name: Проверить API, версионирование и восстановление
+        env:
+          CONFIG_VAULT_TEST_DATABASE_URL: postgresql+psycopg://vault:ci-only-isolated-password@127.0.0.1:5432/config_vault_test
+          DATA_DIR: /tmp/config-vault-ci-data
+          COOKIE_SECURE: "false"
+          SSH_TEST_HOST: 127.0.0.1
+          SSH_TEST_PORT: "22298"
+          SSH_TEST_ROOT: /fixtures
+          SSH_TEST_PASSWORD_FILE: ${{ github.workspace }}/work/ssh-fixture/password
+        run: |
+          export VAULT_KEY=$(python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())')
+          cd backend
+          pytest -q
+      - name: Очистить тестовый SSH target
+        if: always()
+        run: docker rm -f config-vault-test-ssh || true
+      - name: Проверить Compose и полный disaster recovery
+        run: scripts/verify-debian.sh
+      - name: Сохранить отчёт сценария
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: recovery-verification
+          path: work/config-vault-integration.*/report.json
+          if-no-files-found: ignore
+          retention-days: 7

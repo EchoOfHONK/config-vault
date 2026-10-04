@@ -1,0 +1,28 @@
+{
+  "passed": true,
+  "checks": [
+    "Empty installation and admin login",
+    "Local import nginx, Compose, WireGuard and systemd",
+    "Version 2, real diff and non-destructive restore to version 3",
+    "Snapshot creation and selected-file snapshot restore",
+    "Real Debian OpenSSH connection, host-key pinning and import",
+    "External SSH change, sync, conflict and explicit Keep Remote",
+    "Validated SSH Safe Apply writes the actual file",
+    "Viewer RBAC and secret masking",
+    "Portable encrypted complete backup",
+    "With a new encryption key after deleting test DB and vault: devices, configs, versions, snapshots, users and activity recovered",
+    "Encrypted SSH credentials remain usable after recovery"
+  ],
+  "counts": {
+    "devices": 2,
+    "configs": 5,
+    "users": 2,
+    "snapshots": 1,
+    "nginx_versions": 5,
+    "remote_versions": 5,
+    "activity": 40
+  },
+  "verified_at": "2026-10-03",
+  "final_source_repeat": true,
+  "source_files_verified_unchanged": 42
+}

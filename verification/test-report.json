@@ -1,0 +1,49 @@
+{
+  "date": "2026-10-03",
+  "backend_tests": {
+    "database": "PostgreSQL 16",
+    "passed": 34,
+    "failed": 0,
+    "skipped": 0,
+    "ssh": "Real Debian 13 OpenSSH, password and Ed25519 authentication"
+  },
+  "frontend_build": {
+    "typescript": "passed",
+    "vite_production": "passed"
+  },
+  "browser_workflow": {
+    "created_device": true,
+    "created_config": true,
+    "edited_to_version_2": true,
+    "diff_modes": [
+      "Side by side",
+      "Unified"
+    ],
+    "restored_as_version_3": true,
+    "snapshot_restored_as_version_5": true,
+    "ssh_keep_vault_applied_to_real_remote": true,
+    "remote_previous_content_preserved_in_history": true
+  },
+  "responsive": {
+    "viewport_override": {
+      "width": 390,
+      "height": 844
+    },
+    "observed_css_width": 325,
+    "observed_document_width": 325,
+    "history_and_restore_preview_rendered": true,
+    "physical_mobile_device_tested": false
+  },
+  "limitations": [
+    "No bare-metal Debian installation or public TLS domain tested.",
+    "Responsive layout and preview were inspected; a complete workflow on a physical phone was not run."
+  ],
+  "screenshots": [
+    "desktop-diff.jpg",
+    "restored-history.jpg",
+    "snapshot-restore.jpg",
+    "ssh-conflict.jpg",
+    "ssh-preserved-history.jpg",
+    "mobile-restore.jpg"
+  ]
+}

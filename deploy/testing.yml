@@ -1,0 +1,18 @@
+# Used only by scripts/verify-debian.sh with generated, isolated test paths.
+services:
+  ssh:
+    build:
+      context: .
+      dockerfile: deploy/test-ssh/Dockerfile
+    volumes:
+      - ${TEST_DIRECTORY}/ssh-configs:/fixtures
+    secrets:
+      - fixture_ssh_password
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /run/sshd.pid && kill -0 $$(cat /run/sshd.pid)"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+secrets:
+  fixture_ssh_password:
+    file: ${TEST_DIRECTORY}/ssh_password
